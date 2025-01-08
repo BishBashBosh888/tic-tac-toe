@@ -98,7 +98,7 @@ const gameBoard = (function (){
         console.log("Game Over!");
     }
 
-    return { getBoard, resetBoard, startGame };
+    return { getBoard, resetBoard, startGame, playTurn, setPlayer, isBoardFull };
 })();
 
 function createPlayer(name, symbol){
@@ -115,8 +115,68 @@ function createPlayer(name, symbol){
     return {name, symbol, getScore, giveScore};
 }
 
-const player1 = createPlayer("Alice", "X");
-const player2 = createPlayer("Bob", "O");
+const gameBoardDiv = document.getElementById('gameBoard');
+const messageDiv = document.getElementById('message');
+const resetButton = document.getElementById('resetButton');
 
-gameBoard.startGame(player1,player2);
+const player1 = createPlayer('bob','X');
+const player2 = createPlayer('guerilla','O');
+gameBoard.setPlayer(player1,player2);
+let currentPlayer = player1;
 
+gameBoard.resetBoard();
+renderBoard();
+
+function renderBoard() {
+    gameBoardDiv.innerHTML = "";
+    const board = gameBoard.getBoard();
+    board.forEach((row, rowIndex) => {
+      row.forEach((cell, colIndex) => {
+        const cellDiv = document.createElement("div");
+        cellDiv.classList.add("cell");
+        if (cell !== "") cellDiv.classList.add("taken");
+        cellDiv.textContent = cell;
+        cellDiv.addEventListener("click", () => handleMove(rowIndex, colIndex));
+        gameBoardDiv.appendChild(cellDiv);
+      });
+    });
+    messageDiv.textContent = `${currentPlayer.name}'s turn (${currentPlayer.symbol})`;
+}
+
+function handleMove(row, col) {
+    if (!gameBoard.getBoard()[row][col]) {
+      gameBoard.playTurn(row, col);
+      if (gameBoard.getBoard()[row][col] === currentPlayer.symbol) {
+        if (checkWin()) {
+          messageDiv.textContent = `${currentPlayer.name} wins!`;
+          disableBoard();
+        } else if (gameBoard.isBoardFull()) {
+          messageDiv.textContent = "It's a tie!";
+        } else {
+          currentPlayer = currentPlayer === player1 ? player2 : player1;
+          renderBoard();
+        }
+      }
+    }
+}
+
+function checkWin() {
+    return gameBoard.getBoard().some(
+      (row, rowIndex) =>
+        row.every((cell) => cell === currentPlayer.symbol) || // Check rows
+        gameBoard.getBoard().every((r) => r[rowIndex] === currentPlayer.symbol) // Check columns
+    );
+}
+
+function disableBoard() {
+    document.querySelectorAll(".cell").forEach((cell) => {
+      cell.classList.add("taken");
+      cell.removeEventListener("click", handleMove);
+    });
+}
+
+resetButton.addEventListener("click", () => {
+    gameBoard.resetBoard();
+    currentPlayer = player1;
+    renderBoard();
+});
