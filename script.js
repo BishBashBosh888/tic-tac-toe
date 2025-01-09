@@ -98,7 +98,7 @@ const gameBoard = (function (){
         console.log("Game Over!");
     }
 
-    return { getBoard, resetBoard, startGame, playTurn, setPlayer, isBoardFull };
+    return { getBoard, resetBoard, startGame, playTurn, setPlayer, isBoardFull , checkWin};
 })();
 
 function createPlayer(name, symbol){
@@ -115,6 +115,8 @@ function createPlayer(name, symbol){
     return {name, symbol, getScore, giveScore};
 }
 
+
+// frontend
 const gameBoardDiv = document.getElementById('gameBoard');
 const messageDiv = document.getElementById('message');
 const resetButton = document.getElementById('resetButton');
@@ -135,6 +137,7 @@ function renderBoard() {
         const cellDiv = document.createElement("div");
         cellDiv.classList.add("cell");
         if (cell !== "") cellDiv.classList.add("taken");
+        console.log("cell = ", cell);
         cellDiv.textContent = cell;
         cellDiv.addEventListener("click", () => handleMove(rowIndex, colIndex));
         gameBoardDiv.appendChild(cellDiv);
@@ -145,27 +148,20 @@ function renderBoard() {
 
 function handleMove(row, col) {
     if (!gameBoard.getBoard()[row][col]) {
-      gameBoard.playTurn(row, col);
-      if (gameBoard.getBoard()[row][col] === currentPlayer.symbol) {
-        if (checkWin()) {
-          messageDiv.textContent = `${currentPlayer.name} wins!`;
-          disableBoard();
-        } else if (gameBoard.isBoardFull()) {
-          messageDiv.textContent = "It's a tie!";
-        } else {
-          currentPlayer = currentPlayer === player1 ? player2 : player1;
-          renderBoard();
-        }
-      }
-    }
-}
+        gameBoard.playTurn(row, col);
 
-function checkWin() {
-    return gameBoard.getBoard().some(
-      (row, rowIndex) =>
-        row.every((cell) => cell === currentPlayer.symbol) || // Check rows
-        gameBoard.getBoard().every((r) => r[rowIndex] === currentPlayer.symbol) // Check columns
-    );
+        renderBoard();
+
+        if (gameBoard.checkWin()) {
+            messageDiv.textContent = `${currentPlayer.name} wins!`;
+            disableBoard();
+        } else if (gameBoard.isBoardFull()) {
+            messageDiv.textContent = "It's a tie!";
+        } else {
+            currentPlayer = currentPlayer === player1 ? player2 : player1;
+            messageDiv.textContent = `${currentPlayer.name}'s turn (${currentPlayer.symbol})`;
+        }
+    }
 }
 
 function disableBoard() {
